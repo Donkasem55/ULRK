@@ -54,10 +54,13 @@ main:
 	cli
 	hlt
 
-load db "[LP 0x01] MKSI: LOADED ULMK INITSYSFN", 10, 0
-kernelmsg db "[LP 0x02] MKSI: INITIALISED KERNEL", 10, 0
-mainloop db "[LP 0x03] MKSI: ENTERED MAINLOOP", 10, 0
-welc db "Welcome to the Ultra Lightweight Micro-Kernel!", 10, 0
-prompt db 10, "> ", 0
+load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
+kernelmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
+mainloop db "[LP 0x03] RKSI: ENTERED MAINLOOP", 10, 0
+welc db "Welcome to the Ultra Lightweight Reduced Kernel!", 10, 0
+prompt db 10, "ULRK SHELL [MAX 512] > ", 0
 
-times 1024 - ($ - $$) db 0
+cmd: resb 512
+cmdindex dw 0
+
+times 4096 - ($ - $$) db 0
