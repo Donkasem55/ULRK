@@ -13,12 +13,13 @@ init:
 	call print
 	jmp bootseq
 
-times 112 - ($ - $$) db 0
+times 96 - ($ - $$) db 0
 
 ; starting attributes segment
 consattr db 0x0F
 pass db "raisin"
 passinp db "      "
+ver db "ULRK-26 0.0.1", 0
 
 times 128 - ($ - $$) db 0
 
@@ -110,7 +111,14 @@ bootmain:
 
 	mov si, logo
 	call print
+
 	mov si, welcline
+	call print
+
+	mov si, ver
+	call print
+
+	mov si, exclam
 	call print
 
 .login:
@@ -200,7 +208,8 @@ logo db \
 "| |  | | | |       |    /  |   /", 10, \
 "| \__/ | | |_____  | |\ \  | |\ \", 10, \
 " \____/  |_______| |_| \_\ |_| \_\", 10, 10, 0
-welcline db "Welcome to ULRK-26!", 10, 0
+welcline db "Welcome to ", 0
+exclam db "!", 10, 0
 logintxt db 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
 
 returntxt db 10, "Welcome back, user!", 10, 0
