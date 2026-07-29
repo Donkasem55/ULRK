@@ -214,5 +214,10 @@ logintxt db 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
 
 returntxt db 10, "Welcome back, user!", 10, 0
 
-
 times 1024 - ($ - $$) db 0
+
+; kernel at 0x0000:0x8200
+
+%include "src/kernel.asm"
+
+times 2048 - ($ - $$) db 0
