@@ -1,7 +1,5 @@
 ; Initialisation System Functions
 
-; call at 0x7E80
-
 [org 0x7E00]
 
 cli
@@ -9,6 +7,8 @@ cli
 init:
 	mov al, 0b00001111
 	call clear
+	mov ax, cs
+	mov es, ax
 	mov si, load
 	call print
 	jmp bootseq
@@ -24,6 +24,8 @@ ver db "ULRK-26 0.0.1", 0
 times 128 - ($ - $$) db 0
 
 bootseq:
+	mov ax, ds
+	mov es, ax
 	mov si, bootmsg
 	call print
 	jmp bootmain
@@ -48,7 +50,7 @@ reset:
 print:
 .loop:
 	mov ah, 0x0E
-	mov al, [si]
+	mov al, [es:si]
 	mov bh, 0x00
 	cmp al, 0
 	je .done
@@ -76,12 +78,19 @@ print:
 	ret
 
 bootmain:
+	mov ax, ds
+	mov es, ax
 	mov si, mainloop
 	call print
+
+	mov ax, ds
+	mov es, ax
 	mov si, welc
 	call print
 
 .bootloop:
+	mov ax, ds
+	mov es, ax
 	mov si, booting
 	call print
 
@@ -97,10 +106,14 @@ bootmain:
 .endboot:
 	mov ah, 0x0E
 	int 0x10
-	
+
+	mov ax, ds
+	mov es, ax
 	mov si, dnewline
 	call print
 
+	mov ax, ds
+	mov es, ax
 	mov si, norm
 	call print
 
@@ -109,19 +122,29 @@ bootmain:
 	mov [consattr], 0x1F
 	call reset
 
+	mov ax, ds
+	mov es, ax
 	mov si, logo
 	call print
 
+	mov ax, ds
+	mov es, ax
 	mov si, welcline
 	call print
 
+	mov ax, ds
+	mov es, ax
 	mov si, ver
 	call print
 
+	mov ax, ds
+	mov es, ax
 	mov si, exclam
 	call print
 
 .login:
+	mov ax, ds
+	mov es, ax
 	mov si, logintxt
 	call print
 
@@ -188,11 +211,8 @@ bootmain:
 	jne .login
 
 .endlogin:
-	mov si, returntxt
-	call print
 
-	cli
-	hlt
+	jmp kernelstart
 
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
@@ -212,11 +232,10 @@ welcline db "Welcome to ", 0
 exclam db "!", 10, 0
 logintxt db 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
 
-returntxt db 10, "Welcome back, user!", 10, 0
-
 times 1024 - ($ - $$) db 0
 
 ; kernel at 0x0000:0x8200
+; syscall with call 0x0000:0x8400
 
 %include "src/kernel.asm"
 

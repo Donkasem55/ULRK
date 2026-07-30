@@ -1,6 +1,10 @@
 ; memory sections
 
-kernstart dw 0x7E00, 0x0000
+bootstart dw 0x7E00, 0x0000
+bootend dw 0x81FF, 0x0000
+
+kernstart dw 0x8200, 0x0000
+syscallstart dw 0x8400, 0x0000
 kernend dw 0x8600, 0x0000
 
 driverstart dw 0x8700, 0x0000
@@ -9,17 +13,17 @@ driverend dw 0xA700, 0x0000
 fsstart dw 0xB000, 0x0000
 fsend dw 0xB200, 0x0000
 
-datastart dw 0xC000, 0x0000
+userstart dw 0xC000, 0x0000
+
+kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
+
+syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
 
 kernelstart:
-	cli
-
-	xor ax, ax
+	mov ax, ds
 	mov es, ax
-	mov [es:0x0200], syscalls
-	mov [es:0x0202], seg syscalls
-
-	sti
+	mov si, kernloadingtxt
+	call print
 
 	xor ax, ax
 	mov es, ax
@@ -37,6 +41,21 @@ kernelstart:
 	mov ah, 2
 	int 0x13
 
+	mov ax, 0
+	mov si, syscalltest
+	call 0x0000:0x8400
+
+	mov si, [userstart]
+	mov bx, 0
+	mov ax, 2
+	call 0x0000:0x8400
+
+	call far [userstart]
+
+	hlt
+
+times 1536 - ($ - $$) db 0
+
 kernel:
 syscalls:
 	cmp ax, 0
@@ -47,6 +66,9 @@ syscalls:
 
 	cmp ax, 2
 	je .readfilecall
+
+	cmp ax, 3
+	je .vercall
 
 	jmp .returncall
 
@@ -60,21 +82,18 @@ syscalls:
 	jmp .returncall
 
 .readfilecall:
-	mov ax, 2
-	mul bx
-	mov bx, ax
-	add bx, [fsstart]
+	mov ax, bx
+	shl ax, 1
 
-	xor ax, ax
-	mov es, ax
-	xor di, di
+	mov si, [fsstart]
+	add si, ax
 
-	mov al, [bx]
-	mov cl, [bx+1]
-	
-	mov ax, 0
-	mov es, ax
-	mov bx, si
+	mov al, [si]
+	mov cl, [si+1]
+
+	mov dx, 0x0000 ; fix this later
+	mov es, dx
+	mov bx, [userstart]
 
 	mov ch, 0
 	mov dh, 0
@@ -84,5 +103,9 @@ syscalls:
 
 	jmp .returncall
 
+.vercall:
+	mov bx, ver
+	ret
+
 .returncall:
-	iret
+	ret
