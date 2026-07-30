@@ -12,7 +12,7 @@ mov ch, 0
 mov cl, 2
 mov dh, 0
 mov dl, 0x80
-mov al, 4
+mov al, 16
 mov ah, 2
 int 0x13
 

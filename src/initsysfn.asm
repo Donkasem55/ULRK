@@ -77,6 +77,11 @@ print:
 .done:
 	ret
 
+input:
+	mov ah, 0x00
+	int 0x16
+	ret
+
 bootmain:
 	mov ax, ds
 	mov es, ax
@@ -94,13 +99,32 @@ bootmain:
 	mov si, booting
 	call print
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	cmp al, 'B'
 	je .endboot
 	cmp al, 'b'
 	je .endboot
+
+	cmp al, 'R'
+	je .reboot
+	cmp al, 'r'
+	je .reboot
+
+	cmp al, 'H'
+	je .halt
+	cmp al, 'h'
+	je .halt
+
+	jmp .bootloop
+
+.reboot:
+	mov ax, 0x0000
+	int 0x19
+
+.halt:
+	cli
+	hlt
 	jmp .bootloop
 
 .endboot:
@@ -140,38 +164,32 @@ bootmain:
 
 	mov di, passinp
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
 
-	mov ah, 0x00
-	int 0x16
+	call input
 
 	mov [di], al
 	inc di
@@ -208,23 +226,34 @@ load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
 mainloop db "[LP 0x03] RKSI: ENTERED MAINLOOP", 10, 10, 0
 welc db "RKSI: Initialisation Complete", 10, "Welcome to the Ultra Lightweight Reduced Kernel!", 10, 10, 0
-booting db "Please press 'B' to boot in Normal Mode.", 10, 0
+booting db \
+" _     _   _         ___     _   __ ", 10, \
+"| |   | | | |       |  _ \  | | / / ", 10, \
+"| |   | | | |       | |_| | | |/ /  ", 10, \
+"| |   | | | |       |    /  |   /   ", 10, \
+"| \___/ | | |_____  | |\ \  | |\ \  ", 10, \
+" \_____/  |_______| |_| \_\ |_| \_\ ", 10, 10, \
+"--------- Welcome to ULRK --------- ", 10, \
+"| [B]: Boot in Normal Mode        | ", 10, \
+"| [R]: Reboot                     | ", 10, \
+"| [H]: Halt                       | ", 10, \
+"----------------------------------- ", 10, 10, 0
 norm db "RKSI: Normal Mode Boot Successful", 10, 0
 dnewline db 10, 10, 0
 logo db \
-" _    _   _         ___     _   __", 10, \
-"| |  | | | |       |  _ \  | | / /", 10, \
-"| |  | | | |       | |_| | | |/ /", 10, \
-"| |  | | | |       |    /  |   /", 10, \
-"| \__/ | | |_____  | |\ \  | |\ \", 10, \
-" \____/  |_______| |_| \_\ |_| \_\", 10, 10, 0
+" _     _   _         ___     _   __ ", 10, \
+"| |   | | | |       |  _ \  | | / / ", 10, \
+"| |   | | | |       | |_| | | |/ /  ", 10, \
+"| |   | | | |       |    /  |   /   ", 10, \
+"| \___/ | | |_____  | |\ \  | |\ \  ", 10, \
+" \_____/  |_______| |_| \_\ |_| \_\ ", 10, 10, 0
 logintxt db 10, 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
 
-times 1024 - ($ - $$) db 0
+times 2048 - ($ - $$) db 0
 
-; kernel at 0x0000:0x8200
-; syscall with call 0x0000:0x8400
+; kernel at 0x0000:0x8600
+; syscall with call 0x0000:0x8800
 
 %include "src/kernel.asm"
 
-times 2048 - ($ - $$) db 0
+times 8192 - ($ - $$) db 0

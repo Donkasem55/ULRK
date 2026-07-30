@@ -3,12 +3,12 @@
 bootstart dw 0x7E00, 0x0000
 bootend dw 0x81FF, 0x0000
 
-kernstart dw 0x8200, 0x0000
-syscallstart dw 0x8400, 0x0000
-kernend dw 0x8600, 0x0000
+kernstart dw 0x8600, 0x0000
+syscallstart dw 0x8800, 0x0000
+kernend dw 0x9D00, 0x0000
 
-driverstart dw 0x8700, 0x0000
-driverend dw 0xA700, 0x0000
+driverstart dw 0x9E00, 0x0000
+driverend dw 0xAFFF, 0x0000
 
 fsstart dw 0xB000, 0x0000
 fsend dw 0xB200, 0x0000
@@ -20,6 +20,21 @@ colourindex db 0
 kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
+
+rega dw 0
+regb dw 0
+regc dw 0
+regd dw 0
+
+regsp dw 0
+regbp dw 0
+regsi dw 0
+regdi dw 0
+
+regcs dw 0
+regds dw 0
+regss dw 0
+reges dw 0
 
 kernelstart:
 	mov ax, ds
@@ -36,7 +51,7 @@ kernelstart:
 	mov bx, [fsstart]
 
 	mov ch, 0
-	mov cl, 6
+	mov cl, 18
 	mov dh, 0
 	mov dl, 0x80
 	mov al, 1
@@ -45,21 +60,39 @@ kernelstart:
 
 	mov ax, 0
 	mov si, syscalltest
-	call 0x0000:0x8400
+	call 0x0000:0x8800
 
 	mov si, [userstart]
 	mov bx, 0
 	mov ax, 2
-	call 0x0000:0x8400
+	call 0x0000:0x8800
 
 	call far [userstart]
 
 	hlt
 
-times 1536 - ($ - $$) db 0
+times 2560 - ($ - $$) db 0
 
 kernel:
+
 syscalls:
+	mov [rega], ax
+	mov [regb], bx
+	mov [regc], cx
+	mov [regd], dx
+
+	mov [regsp], sp
+	mov [regbp], bp
+	mov [regsi], si
+	mov [regdi], di
+
+	mov [regcs], cs
+	mov [regds], ds
+	mov [regss], ss
+	mov [reges], es
+
+	pushf
+
 	cmp ax, 0
 	je .printsyscall
 
@@ -74,6 +107,9 @@ syscalls:
 
 	cmp ax, 4
 	je .microgl
+
+	cmp ax, 5
+	je .inputcall
 
 	jmp .returncall
 
@@ -170,5 +206,10 @@ syscalls:
 	rep stosb
 	jmp .returncall
 
+.inputcall:
+	call input
+	jmp .returncall
+
 .returncall:
+	popf
 	ret
