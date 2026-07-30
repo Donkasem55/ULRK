@@ -15,6 +15,8 @@ fsend dw 0xB200, 0x0000
 
 userstart dw 0xC000, 0x0000
 
+colourindex db 0
+
 kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
@@ -70,6 +72,9 @@ syscalls:
 	cmp ax, 3
 	je .vercall
 
+	cmp ax, 4
+	je .microgl
+
 	jmp .returncall
 
 .printsyscall:
@@ -105,7 +110,65 @@ syscalls:
 
 .vercall:
 	mov bx, ver
-	ret
+	jmp .returncall
+
+.microgl:
+	cmp bx, 0
+	je .enablemicrogl
+
+	cmp bx, 1
+	je .disablemicrogl
+
+	cmp bx, 2
+	je .setcol
+
+	cmp bx, 3
+	je .setpx
+
+	cmp bx, 4
+	je .fillbg
+
+	jmp .returncall
+
+.enablemicrogl:
+	mov ax, 0x0013
+	int 0x10
+	jmp .returncall
+
+.disablemicrogl:
+	mov ax, 0x0003
+	int 0x10
+	jmp .returncall
+
+.setcol:
+	mov [colourindex], cl
+	jmp .returncall
+
+.setpx:
+	mov ax, 320 ;params are x in cx and y in dx
+	mul dx
+	add ax, cx
+	mov di, ax
+
+	mov ax, 0xA000
+	mov es, ax
+
+	mov al, [colourindex]
+	mov [es:di], al
+
+	jmp .returncall
+
+.fillbg:
+	mov ax, 0xA000
+	mov es, ax
+	mov di, cx
+
+	mov cx, dx
+	cld
+	mov al, [colourindex]
+
+	rep stosb
+	jmp .returncall
 
 .returncall:
 	ret
