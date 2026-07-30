@@ -129,17 +129,7 @@ bootmain:
 
 	mov ax, ds
 	mov es, ax
-	mov si, welcline
-	call print
-
-	mov ax, ds
-	mov es, ax
 	mov si, ver
-	call print
-
-	mov ax, ds
-	mov es, ax
-	mov si, exclam
 	call print
 
 .login:
@@ -228,9 +218,7 @@ logo db \
 "| |  | | | |       |    /  |   /", 10, \
 "| \__/ | | |_____  | |\ \  | |\ \", 10, \
 " \____/  |_______| |_| \_\ |_| \_\", 10, 10, 0
-welcline db "Welcome to ", 0
-exclam db "!", 10, 0
-logintxt db 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
+logintxt db 10, 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
 
 times 1024 - ($ - $$) db 0
 
