@@ -1,5 +1,4 @@
 *.o
-!fssignature.o
 obj/
 
 *.img
