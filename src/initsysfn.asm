@@ -2,6 +2,7 @@
 
 [org 0x7E00]
 
+pass db "123456"
 cli
 
 init:
@@ -13,13 +14,11 @@ init:
 	call print
 	jmp bootseq
 
-times 96 - ($ - $$) db 0
-
 ; starting attributes segment
 consattr db 0x0F
-pass db "raisin"
 passinp db "      "
-ver db "ULRK-26 0.0.1", 0
+osver db "ULRK-26.0", 0
+kernelver db "0.0.1-ULRK-x86_16", 0
 
 times 128 - ($ - $$) db 0
 
@@ -93,12 +92,12 @@ bootmain:
 	mov si, welc
 	call print
 
-.bootloop:
 	mov ax, ds
 	mov es, ax
 	mov si, booting
 	call print
 
+.bootloop:
 	call input
 
 	cmp al, 'B'
@@ -119,10 +118,14 @@ bootmain:
 	jmp .bootloop
 
 .reboot:
+	mov ah, 0x0E
+	int 0x10
 	mov ax, 0x0000
 	int 0x19
 
 .halt:
+	mov ah, 0x0E
+	int 0x10
 	cli
 	hlt
 	jmp .bootloop
@@ -148,12 +151,22 @@ bootmain:
 
 	mov ax, ds
 	mov es, ax
-	mov si, logo
+	mov si, osver
 	call print
 
 	mov ax, ds
 	mov es, ax
-	mov si, ver
+	mov si, spacebar
+	call print
+
+	mov ax, ds
+	mov es, ax
+	mov si, kernelver
+	call print
+
+	mov ax, ds
+	mov es, ax
+	mov si, welcometoulrk
 	call print
 
 .login:
@@ -225,7 +238,7 @@ bootmain:
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
 mainloop db "[LP 0x03] RKSI: ENTERED MAINLOOP", 10, 10, 0
-welc db "RKSI: Initialisation Complete", 10, "Welcome to the Ultra Lightweight Reduced Kernel!", 10, 10, 0
+welc db "RKSI: Initialisation Complete", 10, "Welcome to ", 0
 booting db \
 " _     _   _         ___     _   __ ", 10, \
 "| |   | | | |       |  _ \  | | / / ", 10, \
@@ -239,15 +252,11 @@ booting db \
 "| [H]: Halt                       | ", 10, \
 "----------------------------------- ", 10, 10, 0
 norm db "RKSI: Normal Mode Boot Successful", 10, 0
+spacebar db " ", 0
+exclammark db "!", 0
 dnewline db 10, 10, 0
-logo db \
-" _     _   _         ___     _   __ ", 10, \
-"| |   | | | |       |  _ \  | | / / ", 10, \
-"| |   | | | |       | |_| | | |/ /  ", 10, \
-"| |   | | | |       |    /  |   /   ", 10, \
-"| \___/ | | |_____  | |\ \  | |\ \  ", 10, \
-" \_____/  |_______| |_| \_\ |_| \_\ ", 10, 10, 0
-logintxt db 10, 10, "[LOGIN : 6 CHAR : NO BACKSPACE]: ", 0
+welcometoulrk db " Login", 0
+logintxt db 10, 10, "[PIN]: ", 0
 
 times 2048 - ($ - $$) db 0
 

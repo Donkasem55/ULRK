@@ -11,7 +11,7 @@ microglstart dw 0x9E00, 0x0000
 microglend dw 0xAFFF, 0x0000
 
 fsstart dw 0xB000, 0x0000
-fsend dw 0xB200, 0x0000
+fsend dw 0xB400, 0x0000
 
 userstart dw 0xC000, 0x0000
 
@@ -24,7 +24,6 @@ kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
 
 rega dw 0, 0, 0, 0
-regb dw 0, 0, 0, 0
 regc dw 0, 0, 0, 0
 regd dw 0, 0, 0, 0
 
@@ -70,16 +69,15 @@ kernelstart:
 	mov si, syscalltest
 	call 0x0000:0x8800
 
-	mov si, [userstart]
+	mov si, [microglstart]
 	mov bx, 0
 	mov ax, 2
 	call 0x0000:0x8800
 
-	; this is for whenever i do add my second binary for window management and stuff
-	; mov si, [userstart+512]
-	; mov bx, 1
-	; mov ax, 2
-	; call 0x0000:0x8800
+	mov si, [userstart]
+	mov bx, 1
+	mov ax, 2
+	call 0x0000:0x8800
 
 	call far [userstart]
 
@@ -91,7 +89,6 @@ kernel:
 
 syscalls:
 	mov [rega], ax
-	mov [regb], bx
 	mov [regc], cx
 	mov [regd], dx
 
@@ -156,7 +153,20 @@ syscalls:
 	jmp .returncall
 
 .vercall:
-	mov bx, ver
+	cmp bx, 0
+	je .osvercall
+
+	cmp bx, 1
+	je .kernelvercall
+	
+	jmp .endvercall
+
+.osvercall:
+	mov bx, osver
+	jmp .endvercall
+.kernelvercall:
+	mov bx, kernelver
+.endvercall:
 	jmp .returncall
 
 ; This is the start of the graphics ULRK basic graphics driver section. It's very confusing.
@@ -261,7 +271,6 @@ syscalls:
 .returncall:
 
 	mov ax, [rega]
-	mov bx, [regb]
 	mov cx, [regc]
 	mov dx, [regd]
 
