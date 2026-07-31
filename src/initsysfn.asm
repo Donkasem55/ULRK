@@ -92,6 +92,28 @@ bootmain:
 	mov si, welc
 	call print
 
+	call clear
+
+	mov ax, ds
+	mov es, ax
+	mov si, welc2
+	call print
+
+	mov ax, ds
+	mov es, ax
+	mov si, osver
+	call print
+
+	mov ax, ds
+	mov es, ax
+	mov si, spacebar
+	call print
+
+	mov ax, ds
+	mov es, ax
+	mov si, kernelver
+	call print
+
 	mov ax, ds
 	mov es, ax
 	mov si, booting
@@ -238,20 +260,23 @@ bootmain:
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
 mainloop db "[LP 0x03] RKSI: ENTERED MAINLOOP", 10, 10, 0
-welc db "RKSI: Initialisation Complete", 10, "Welcome to ", 0
-booting db \
-" _     _   _         ___     _   __ ", 10, \
-"| |   | | | |       |  _ \  | | / / ", 10, \
-"| |   | | | |       | |_| | | |/ /  ", 10, \
-"| |   | | | |       |    /  |   /   ", 10, \
-"| \___/ | | |_____  | |\ \  | |\ \  ", 10, \
-" \_____/  |_______| |_| \_\ |_| \_\ ", 10, 10, \
-"--------- Welcome to ULRK --------- ", 10, \
-"| [B]: Boot in Normal Mode        | ", 10, \
-"| [R]: Reboot                     | ", 10, \
-"| [H]: Halt                       | ", 10, \
-"----------------------------------- ", 10, 10, 0
-norm db "RKSI: Normal Mode Boot Successful", 10, 0
+welc db "[LP 0x04] RKSI: Initialisation Complete", 10, 0
+welc2 db 10, " Welcome to ", 0
+booting db 10, 10, \
+" -------------------------------------------------------------------- ", 10, \
+" |   _     _   _         ___     _   __  |  ------    ----- ------  | ", 10, \
+" |  | |   | | | |       |  _ \  | | / /  |  |    |___/   /__|    |  | ", 10, \
+" |  | |   | | | |       | |_| | | |/ /   |  |       /   /   |    |  | ", 10, \
+" |  | |   | | | |       |    /  |   /    |  |     _/   /____|    |  | ", 10, \
+" |  | \___/ | | |_____  | |\ \  | |\ \   |  |    |/   /     |    |  | ", 10, \
+" |   \_____/  |_______| |_| \_\ |_| \_\  |  |        |      |    |  | ", 10, \
+" |                                       |  |    |\   \     |    |  | ", 10, \
+" |----------- Welcome to ULRK -----------|  |    | \   \    |    |  | ", 10, \
+" |  [B]: Boot in Normal Mode             |  |    ---\---\---|    |  | ", 10, \
+" |  [R]: Reboot                          |  |        \   \  |    |  | ", 10, \
+" |  [H]: Halt                            |  ----------\___\-------  | ", 10, \
+" -------------------------------------------------------------------- ", 10, 10, 0
+norm db "[LP 0x05] RKSI: Normal Mode Boot Successful", 10, 0
 spacebar db " ", 0
 exclammark db "!", 0
 dnewline db 10, 10, 0
