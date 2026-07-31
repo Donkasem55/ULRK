@@ -7,7 +7,7 @@ ASM = nasm
 AFLAGS = -f bin
 
 # Note that the order here defines the order they will be in inside disk.img
-AOBJS = $(OBJ_DIR)/boot.o $(OBJ_DIR)/initsysfn.o $(OBJ_DIR)/fssignature.o $(OBJ_DIR)/deskbg.o
+AOBJS = $(OBJ_DIR)/boot.o $(OBJ_DIR)/initsysfn.o $(SRC_DIR)/fssignature.bin $(OBJ_DIR)/microgl.o $(OBJ_DIR)/deskbg.o
 
 .PHONY: all
 all: build
