@@ -7,13 +7,15 @@ kernstart dw 0x8600, 0x0000
 syscallstart dw 0x8800, 0x0000
 kernend dw 0x9D00, 0x0000
 
-driverstart dw 0x9E00, 0x0000
-driverend dw 0xAFFF, 0x0000
+microglstart dw 0x9E00, 0x0000
+microglend dw 0xAFFF, 0x0000
 
 fsstart dw 0xB000, 0x0000
 fsend dw 0xB200, 0x0000
 
 userstart dw 0xC000, 0x0000
+
+crntprocid db 0
 
 colourindex db 0
 
@@ -21,20 +23,26 @@ kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
 
-rega dw 0
-regb dw 0
-regc dw 0
-regd dw 0
+rega dw 0, 0, 0, 0
+regb dw 0, 0, 0, 0
+regc dw 0, 0, 0, 0
+regd dw 0, 0, 0, 0
 
-regsp dw 0
-regbp dw 0
-regsi dw 0
-regdi dw 0
+regsp dw 0, 0, 0, 0
+regbp dw 0, 0, 0, 0
+regdi dw 0, 0, 0, 0
 
-regcs dw 0
-regds dw 0
-regss dw 0
-reges dw 0
+regcs dw 0, 0, 0, 0
+regds dw 0, 0, 0, 0
+regss dw 0, 0, 0, 0
+
+processes dw \
+	0xC000, 0x0000, \
+	0x0000, 0x0000, \
+	0x0000, 0x0000, \
+	0x0000, 0x0000, \
+
+proccount db 0
 
 kernelstart:
 	mov ax, ds
@@ -67,6 +75,12 @@ kernelstart:
 	mov ax, 2
 	call 0x0000:0x8800
 
+	; this is for whenever i do add my second binary for window management and stuff
+	; mov si, [userstart+512]
+	; mov bx, 1
+	; mov ax, 2
+	; call 0x0000:0x8800
+
 	call far [userstart]
 
 	hlt
@@ -83,15 +97,11 @@ syscalls:
 
 	mov [regsp], sp
 	mov [regbp], bp
-	mov [regsi], si
 	mov [regdi], di
 
 	mov [regcs], cs
 	mov [regds], ds
 	mov [regss], ss
-	mov [reges], es
-
-	pushf
 
 	cmp ax, 0
 	je .printsyscall
@@ -106,7 +116,7 @@ syscalls:
 	je .vercall
 
 	cmp ax, 4
-	je .microgl
+	je .graphicsULRK
 
 	cmp ax, 5
 	je .inputcall
@@ -123,18 +133,19 @@ syscalls:
 	jmp .returncall
 
 .readfilecall:
+	mov cx, si
 	mov ax, bx
 	shl ax, 1
 
 	mov si, [fsstart]
 	add si, ax
 
+	mov bx, cx
 	mov al, [si]
 	mov cl, [si+1]
 
 	mov dx, 0x0000 ; fix this later
 	mov es, dx
-	mov bx, [userstart]
 
 	mov ch, 0
 	mov dh, 0
@@ -148,12 +159,17 @@ syscalls:
 	mov bx, ver
 	jmp .returncall
 
-.microgl:
+; This is the start of the graphics ULRK basic graphics driver section. It's very confusing.
+; When I wrote the driver, only I and God understood how it works.
+; Now, only I understand how it works because I do not know how to properly explain it to even God themselves.
+; You can try asking AI, but it won't understand this masterpiece.
+
+.graphicsULRK:
 	cmp bx, 0
-	je .enablemicrogl
+	je .enablegraphics
 
 	cmp bx, 1
-	je .disablemicrogl
+	je .disablegraphics
 
 	cmp bx, 2
 	je .setcol
@@ -166,12 +182,12 @@ syscalls:
 
 	jmp .returncall
 
-.enablemicrogl:
+.enablegraphics:
 	mov ax, 0x0013
 	int 0x10
 	jmp .returncall
 
-.disablemicrogl:
+.disablegraphics:
 	mov ax, 0x0003
 	int 0x10
 	jmp .returncall
@@ -181,7 +197,7 @@ syscalls:
 	jmp .returncall
 
 .setpx:
-	mov ax, 320 ;params are x in cx and y in dx
+	mov ax, 320 ; params are x in cx and y in dx
 	mul dx
 	add ax, cx
 	mov di, ax
@@ -206,10 +222,55 @@ syscalls:
 	rep stosb
 	jmp .returncall
 
+; This is where graphicULRK code ends. Sane stuff starts again.
+
 .inputcall:
 	call input
 	jmp .returncall
 
+.yieldcall:
+	pop si
+	pop es
+
+	mov ax, 4
+	mul [crntprocid]
+	mov bx, ax
+	add bx, processes
+
+	mov [bx], si
+	mov [bx+2], es
+
+	mov si, [bx+4]
+	mov ax, [bx+6]
+	mov es, ax
+
+	inc [crntprocid]
+	mov ax, [proccount]
+	cmp ax, [crntprocid]
+	jle .returncall
+
+	mov [crntprocid], 0
+	mov si, [processes]
+	mov ax, [processes+2]
+	mov es, ax
+	push es
+	push si
+
+	jmp .returncall
+
 .returncall:
-	popf
+
+	mov ax, [rega]
+	mov bx, [regb]
+	mov cx, [regc]
+	mov dx, [regd]
+
+	mov sp, [regsp]
+	mov bp, [regbp]
+	mov di, [regdi]
+
+	mov cs, [regcs]
+	mov ds, [regds]
+	mov ss, [regss]
+
 	ret

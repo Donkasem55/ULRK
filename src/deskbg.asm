@@ -29,12 +29,13 @@ main:
 	mov bx, 0
 	call 0x0000:0x8800
 
+mainloop:
 	mov ax, 4
 	mov bx, 2
 	mov cl, 0x36
 	call 0x0000:0x8800
 
-	; I'm not even gonna try to explain microgl (I can't without losing my mind)
+	; I'm not even gonna try to explain my graphics system (I can't without losing my mind)
 
 	mov ax, 4
 	mov bx, 4
@@ -53,6 +54,12 @@ main:
 	mov dx, 32000
 	call 0x0000:0x8800
 
+	mov ax, 6
+	call 0x0000:0x8800
+
+	jmp mainloop
+
+end:
 	ret
 
 times 512 - ($ - $$) db 0
