@@ -30,11 +30,6 @@ disk.img: $(AOBJS)
 	@cat $(AOBJS) > disk.img
 	@echo "Done."
 
-$(OBJ_DIR)/fssignature.o:
-	@echo "Generating fssignature.o"
-	@printf "\x01\x13" > $@
-	@dd if=/dev/zero bs=1 count=510 >> $@ 2>/dev/null
-	
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
 	@echo "ASM $<"
 	@$(ASM) $(AFLAGS) $< -o $@
