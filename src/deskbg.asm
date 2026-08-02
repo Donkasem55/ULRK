@@ -4,6 +4,7 @@ jmp main
 
 welcome db "Welcome to ", 0
 exclam db "!", 10, 0
+vsptr dw 0x0000
 
 main:
 	mov ax, cs
@@ -15,6 +16,8 @@ main:
 	mov ax, 3
 	mov bx, 0
 	call 0x0000:0x8800
+
+	mov [vsptr], bx
 
 	mov ax, 0
 	mov si, bx
@@ -73,6 +76,17 @@ mainloop:
 	mov dx, 20
 	push 0
 	push 0
+	call 0x0000:0x9E00
+
+	mov ax, 4
+	mov bx, 2
+	mov cl, 0x0F
+	call 0x0000:0x8800
+
+	mov bx, 6
+	mov cx, 0
+	mov dx, 0
+	mov si, [vsptr]
 	call 0x0000:0x9E00
 
 	; this is the yield syscall except it's unused since I'm returning immediately
