@@ -170,6 +170,42 @@ mglMain:
 
 	jmp .mglDrawChar4
 
+.mglBlit:
+	pop si
+	pop di
+
+	pop [y]
+	pop [x]
+
+	mov [x2], cx
+	mov [y2], dx
+
+	mov cx, [x]
+	mov dx, [y]
+
+	.mglBlitLoop2:
+		mov cx, [x]
+
+		.mglBlitLoop:
+			mov ax, 4
+			mov bx, 7
+			call 0x0000:0x8800
+
+			inc cx
+			cmp cx, [x2]
+			jbe .mglBlitLoop
+
+	.mglBlitLoop3:
+		inc dx
+
+		cmp dx, [y2]
+		jbe .mglBlitLoop2
+
+		push di
+		push si
+		retf
+
+
 accu db 0
 axtmp dw 0
 bxtmp dw 0

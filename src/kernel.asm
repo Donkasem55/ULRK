@@ -15,9 +15,12 @@ fsend dw 0xB400, 0x0000
 
 userstart dw 0xC000, 0x0000
 
+datastart dw 0xC000, 0x1000
+
 crntprocid db 0
 
 colourindex db 0
+secondcolour db 0
 
 kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
@@ -69,13 +72,24 @@ kernelstart:
 	mov si, syscalltest
 	call 0x0000:0x8800
 
+	mov ax, [microglstart + 2]
+	mov es, ax
 	mov si, [microglstart]
 	mov bx, 0
 	mov ax, 2
 	call 0x0000:0x8800
 
+	mov ax, [userstart + 2]
+	mov es, ax
 	mov si, [userstart]
 	mov bx, 1
+	mov ax, 2
+	call 0x0000:0x8800
+
+	mov ax, [datastart + 2]
+	mov es, ax
+	mov si, [userstart]
+	mov bx, 2
 	mov ax, 2
 	call 0x0000:0x8800
 
@@ -141,9 +155,6 @@ syscalls:
 	mov al, [si]
 	mov cl, [si+1]
 
-	mov dx, 0x0000 ; fix this later
-	mov es, dx
-
 	mov ch, 0
 	mov dh, 0
 	mov dl, 0x80
@@ -190,6 +201,12 @@ syscalls:
 	cmp bx, 4
 	je .fillbg
 
+	cmp bx, 5
+	je .setsecondcol
+
+	cmp bx, 6
+	je .setpxsecondcol
+
 	jmp .returncall
 
 .enablegraphics:
@@ -230,6 +247,24 @@ syscalls:
 	mov al, [colourindex]
 
 	rep stosb
+	jmp .returncall
+
+.setsecondcol:
+	mov [secondcolour], cl
+	jmp .returncall
+
+.setpxsecondcol:
+	mov ax, 320 ; params are x in cx and y in dx
+	mul dx
+	add ax, cx
+	mov di, ax
+
+	mov ax, 0xA000
+	mov es, ax
+
+	mov al, [secondcolour]
+	mov [es:di], al
+
 	jmp .returncall
 
 ; This is where graphicULRK code ends. Sane stuff starts again.
