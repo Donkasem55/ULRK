@@ -126,7 +126,7 @@ syscalls:
 
 ; This is the start of the graphics ULRK basic graphics driver section. It's very confusing.
 ; When I wrote the driver, only I and God understood how it works.
-; Now, only I understand how it works because I do not know how to properly explain it to even God themselves.
+; Now, neither of us knows how it works.
 ; You can try asking AI, but it won't understand this masterpiece.
 
 .graphicsULRK:
