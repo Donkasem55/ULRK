@@ -19,6 +19,8 @@ consattr db 0x0F
 passinp db "      "
 osver db "ULRK-26.0", 0
 kernelver db "0.0.1-ULRK-x86_16", 0
+txtcursor dw 0, 0
+savedes dw 0
 
 times 128 - ($ - $$) db 0
 
@@ -30,8 +32,9 @@ bootseq:
 	jmp bootmain
 
 clear:
-	mov ax, 0x0003
-	int 0x10
+	call reset
+	mov [txtcursor], 0
+	mov [txtcursor+2], 0
 	ret
 
 reset:
@@ -46,34 +49,84 @@ reset:
 	rep stosw
 	ret
 
+resetcursorpos:
+	mov dx, 0x3D4
+	mov al, 0x0F
+	out dx, al
+
+	mov ax, di
+	shr ax, 1
+
+	mov dx, 0x3D5
+	out dx, al
+
+	mov dx, 0x3D4
+	mov al, 0x0E
+	out dx, al
+
+	mov dx, 0x3D5
+	mov ax, di
+	shr ax, 1
+	mov al, ah
+	out dx, al
+
+	ret
+
 print:
+	mov [savedes], es
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov di, ax
+	call resetcursorpos
+
 .loop:
-	mov ah, 0x0E
+	mov ax, [savedes]
+	mov es, ax
+	mov ah, [consattr]
 	mov al, [es:si]
-	mov bh, 0x00
 	cmp al, 0
 	je .done
 	cmp al, 10
 	je .newline
 
-	int 0x10
+	mov bx, 0xB800
+	mov es, bx
+	mov [es:di], ax
 	inc si
+	add di, 2
+	call resetcursorpos
+	inc [txtcursor]
+	mov ax, [txtcursor]
+	cmp ax, 80
+	jl .loop
+	mov [txtcursor], 0
+	inc [txtcursor+2]
 	jmp .loop
 
 .newline:
-	mov ah, 0x03
-	mov bh, 0x00
-	int 0x10
+	mov [txtcursor], 0
+	add [txtcursor+2], 1
 
-	mov bh, 0
-	mov ah, 0x02
-	add dh, 1
-	mov dl, 0
-	int 0x10
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov di, ax
+
+	call resetcursorpos
+
 	inc si
 	jmp .loop
 
 .done:
+	mov ax, [savedes]
+	mov es, ax
 	ret
 
 input:

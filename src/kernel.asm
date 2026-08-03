@@ -86,13 +86,6 @@ kernelstart:
 	mov ax, 2
 	call 0x0000:0x8800
 
-	mov ax, [datastart + 2]
-	mov es, ax
-	mov si, [userstart]
-	mov bx, 2
-	mov ax, 2
-	call 0x0000:0x8800
-
 	call far [userstart]
 
 	hlt
