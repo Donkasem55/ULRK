@@ -72,6 +72,30 @@ resetcursorpos:
 
 	ret
 
+printchar:
+	mov ah, [consattr]
+	mov cx, ax
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov di, ax
+	mov ax, 0xB800
+	mov es, ax
+	mov [es:di], cx
+	inc [txtcursor]
+	cmp [txtcursor], 80
+	jl .end
+
+	mov [txtcursor], 0
+	inc [txtcursor+2]
+
+.end:
+	call resetcursorpos
+	ret
+
 print:
 	mov [savedes], es
 	mov ax, 80
@@ -193,21 +217,18 @@ bootmain:
 	jmp .bootloop
 
 .reboot:
-	mov ah, 0x0E
-	int 0x10
+	call printchar
 	mov ax, 0x0000
 	int 0x19
 
 .halt:
-	mov ah, 0x0E
-	int 0x10
+	call printchar
 	cli
 	hlt
 	jmp .bootloop
 
 .endboot:
-	mov ah, 0x0E
-	int 0x10
+	call printchar
 
 	mov ax, ds
 	mov es, ax
@@ -307,8 +328,30 @@ bootmain:
 	jne .login
 
 .endlogin:
+	cli
+	
+GDT:
+	dq 0
 
-	jmp kernelstart
+	; ring zero code
+	db 0b00000000
+	db 0b00000000
+	db 0b10011011
+	db 0x00
+	dw 0x8600
+	dw 0x1400
+
+	; ring zero data
+	db 0b00000000
+	db 0b00000000
+	db 0b10010011
+	db 0x00
+	dw 0x8600
+	dw 0x1400
+
+	; continue later
+
+	;jmp kernelstart
 
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
@@ -340,7 +383,3 @@ times 2048 - ($ - $$) db 0
 
 ; kernel at 0x0000:0x8600
 ; syscall with call 0x0000:0x8800
-
-%include "src/kernel.asm"
-
-times 8192 - ($ - $$) db 0

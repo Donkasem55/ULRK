@@ -1,111 +1,64 @@
+[BITS 32]
+
+jmp kernelstart
+
 ; memory sections
 
-bootstart dw 0x7E00, 0x0000
-bootend dw 0x81FF, 0x0000
+bootstart dd 0x7E00
+bootend dd 0x81FF
 
-kernstart dw 0x8600, 0x0000
-syscallstart dw 0x8800, 0x0000
-kernend dw 0x9D00, 0x0000
+kernstart dd 0x8600
+syscallstart dd 0x8800
+kerndatastart dd 0x9A00
+kernend dd 0x9D00
 
-microglstart dw 0x9E00, 0x0000
-microglend dw 0xAFFF, 0x0000
+microglstart dd 0x9E00
+microglend dd 0xAFFF
 
-fsstart dw 0xB000, 0x0000
-fsend dw 0xB400, 0x0000
+fsstart dd 0xB000
+fsend dd 0xB400
 
-userstart dw 0xC000, 0x0000
-
-datastart dw 0xC000, 0x1000
-
-crntprocid db 0
-
-colourindex db 0
-secondcolour db 0
+userstart dd 0xC000
+datastart dd 0x1C000
 
 kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
 
-rega dw 0, 0, 0, 0
-regc dw 0, 0, 0, 0
-regd dw 0, 0, 0, 0
-
-regsp dw 0, 0, 0, 0
-regbp dw 0, 0, 0, 0
-regdi dw 0, 0, 0, 0
-
-regcs dw 0, 0, 0, 0
-regds dw 0, 0, 0, 0
-regss dw 0, 0, 0, 0
-
-processes dw \
-	0xC000, 0x0000, \
-	0x0000, 0x0000, \
-	0x0000, 0x0000, \
-	0x0000, 0x0000, \
-
-proccount db 0
-
 kernelstart:
-	mov ax, ds
-	mov es, ax
-	mov si, kernloadingtxt
+	mov esi, kernloadingtxt
 	call print
 
-	xor ax, ax
-	mov es, ax
-	xor di, di
+	mov eax, 0
+	mov esi, syscalltest
+	call 0x8800
 
-	mov ax, 0
-	mov es, ax
-	mov bx, [fsstart]
+	mov esi, [microglstart]
+	mov ebx, 0
+	mov eax, 2
+	call 0x8800
 
-	mov ch, 0
-	mov cl, 18
-	mov dh, 0
-	mov dl, 0x80
-	mov al, 1
-	mov ah, 2
-	int 0x13
-
-	mov ax, 0
-	mov si, syscalltest
-	call 0x0000:0x8800
-
-	mov ax, [microglstart + 2]
-	mov es, ax
-	mov si, [microglstart]
-	mov bx, 0
-	mov ax, 2
-	call 0x0000:0x8800
-
-	mov ax, [userstart + 2]
-	mov es, ax
-	mov si, [userstart]
-	mov bx, 1
-	mov ax, 2
-	call 0x0000:0x8800
+	mov esi, [userstart]
+	mov ebx, 1
+	mov eax, 2
+	call 0x8800
 
 	call far [userstart]
 
 	hlt
 
-times 2560 - ($ - $$) db 0
+times 512 - ($ - $$) db 0
 
 kernel:
 
 syscalls:
-	mov [rega], ax
-	mov [regc], cx
-	mov [regd], dx
+	mov [rega], eax
+	mov [regc], ecx
+	mov [regd], edx
 
-	mov [regsp], sp
-	mov [regbp], bp
-	mov [regdi], di
-
-	mov [regcs], cs
-	mov [regds], ds
-	mov [regss], ss
+	mov [regsp], esp
+	mov [regbp], ebp
+	mov [regdi], edi
 
 	cmp ax, 0
 	je .printsyscall
@@ -137,22 +90,20 @@ syscalls:
 	jmp .returncall
 
 .readfilecall:
-	mov cx, si
-	mov ax, bx
-	shl ax, 1
+	mov ecx, esi
+	mov eax, ebx
+	shl eax, 1
 
-	mov si, [fsstart]
-	add si, ax
+	mov esi, [fsstart]
+	add esi, eax
 
-	mov bx, cx
-	mov al, [si]
-	mov cl, [si+1]
+	mov ebx, ecx
+	mov eax, [esi] ; sec count
+	mov ecx, [esi+4] ; start sec
 
-	mov ch, 0
-	mov dh, 0
-	mov dl, 0x80
-	mov ah, 2
-	int 0x13
+	mov esi, ebx
+
+	call idedriver
 
 	jmp .returncall
 
@@ -203,13 +154,13 @@ syscalls:
 	jmp .returncall
 
 .enablegraphics:
-	mov ax, 0x0013
-	int 0x10
+	;mov ax, 0x0013
+	;int 0x10
 	jmp .returncall
 
 .disablegraphics:
-	mov ax, 0x0003
-	int 0x10
+	;mov ax, 0x0003
+	;int 0x10
 	jmp .returncall
 
 .setcol:
@@ -217,25 +168,22 @@ syscalls:
 	jmp .returncall
 
 .setpx:
-	mov ax, 320 ; params are x in cx and y in dx
-	mul dx
-	add ax, cx
-	mov di, ax
-
-	mov ax, 0xA000
-	mov es, ax
+	mov eax, 320 ; params are x in cx and y in dx
+	mul edx
+	add eax, ecx
+	mov edi, 0xA0000
+	add edi, eax
 
 	mov al, [colourindex]
-	mov [es:di], al
+	mov [edi], al
 
 	jmp .returncall
 
 .fillbg:
-	mov ax, 0xA000
-	mov es, ax
-	mov di, cx
+	mov edi, 0xA0000
+	add edi, cx
 
-	mov cx, dx
+	mov ecx, edx
 	cld
 	mov al, [colourindex]
 
@@ -247,28 +195,25 @@ syscalls:
 	jmp .returncall
 
 .setpxsecondcol:
-	mov ax, 320 ; params are x in cx and y in dx
-	mul dx
-	add ax, cx
-	mov di, ax
-
-	mov ax, 0xA000
-	mov es, ax
+	mov eax, 320 ; params are x in cx and y in dx
+	mul edx
+	add eax, ecx
+	mov edi, 0xA0000
+	add edi, eax
 
 	mov al, [secondcolour]
-	mov [es:di], al
+	mov [edi], al
 
 	jmp .returncall
 
 ; This is where graphicULRK code ends. Sane stuff starts again.
 
 .inputcall:
-	call input
+	;call input
 	jmp .returncall
 
 .yieldcall:
-	pop si
-	pop es
+	pop esi
 
 	mov ax, 4
 	mul [crntprocid]
@@ -291,23 +236,245 @@ syscalls:
 	mov si, [processes]
 	mov ax, [processes+2]
 	mov es, ax
-	push es
-	push si
+
+	push esi
 
 	jmp .returncall
 
 .returncall:
 
-	mov ax, [rega]
-	mov cx, [regc]
-	mov dx, [regd]
+	mov eax, [rega]
+	mov ecx, [regc]
+	mov edx, [regd]
 
-	mov sp, [regsp]
-	mov bp, [regbp]
-	mov di, [regdi]
-
-	mov cs, [regcs]
-	mov ds, [regds]
-	mov ss, [regss]
+	mov esp, [regsp]
+	mov ebp, [regbp]
+	mov edi, [regdi]
 
 	ret
+
+
+clear:
+	call reset
+	mov [txtcursor], 0
+	mov [txtcursor+2], 0
+	ret
+
+reset:
+	mov edi, 0xB8000
+
+	mov ah, [consattr]
+	mov al, ' '
+	mov ecx, 2000
+
+	rep stosw
+	ret
+
+resetcursorpos:
+	mov dx, 0x3D4
+	mov al, 0x0F
+	out dx, al
+
+	mov ax, di
+	shr ax, 1
+
+	mov dx, 0x3D5
+	out dx, al
+
+	mov dx, 0x3D4
+	mov al, 0x0E
+	out dx, al
+
+	mov dx, 0x3D5
+	mov ax, di
+	shr ax, 1
+	mov al, ah
+	out dx, al
+
+	ret
+
+printchar:
+	mov ah, [consattr]
+	mov cx, ax
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov edi, 0
+	mov di, ax
+	add edi, 0xB8000
+	mov [edi], cx
+	inc [txtcursor]
+	cmp [txtcursor], 80
+	jl .end
+
+	mov [txtcursor], 0
+	inc [txtcursor+2]
+
+.end:
+	call resetcursorpos
+	ret
+
+print:
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov edi, 0
+	mov di, ax
+	call resetcursorpos
+
+.loop:
+	mov ah, [consattr]
+	mov al, [esi]
+	cmp al, 0
+	je .done
+	cmp al, 10
+	je .newline
+
+	mov edi, 0xB8000
+	mov [edi], ax
+	inc esi
+	add edi, 2
+	call resetcursorpos
+	inc [txtcursor]
+	mov ax, [txtcursor]
+	cmp ax, 80
+	jl .loop
+	mov [txtcursor], 0
+	inc [txtcursor+2]
+	jmp .loop
+
+.newline:
+	mov [txtcursor], 0
+	add [txtcursor+2], 1
+
+	mov ax, 80
+	mov bx, [txtcursor+2]
+	mul bx
+	add ax, [txtcursor]
+	mov bx, 2
+	mul bx
+	mov edi, 0
+	mov di, ax
+
+	call resetcursorpos
+
+	inc esi
+	jmp .loop
+
+.done:
+	ret
+
+;input:
+;	mov ah, 0x00
+;	int 0x16
+;	ret
+
+idedriver:
+	sub ecx, 1
+	mov [tmp], eax
+	mov [tmp2], 0
+	mov [tmp4], ecx
+
+.ideloop:
+	mov eax, [tmp]
+	sub eax, [tmp2]
+	cmp eax, 256
+	mov [tmp5], eax
+	jl .aftersetting
+	
+.setide256:
+	mov eax, 0
+	mov [tmp5], 256
+
+.aftersetting:
+	mov [tmp3], eax
+
+	mov edx, 0x01F2
+	out edx, al
+
+	mov eax, [tmp4]
+	mov edx, 0x01F3
+	out edx, al
+
+	shr eax, 8
+	mov edx, 0x01F4
+	out edx, al
+
+	shr eax, 8
+	mov edx, 0x01F5
+	out edx, al
+
+	mov al, 0b10110000
+	shr eax, 4
+	mov edx, 0x01F6
+	out edx, al
+
+	mov edx, 0x01F7
+	mov al, 0x20
+	out edx, al
+
+.readloop:
+	in al, edx
+	test al, 0x80
+	jnz .readloop
+	test al, 0x08
+	jz .readloop
+
+	mov edi, esi
+	mov eax, 256
+	mul [tmp5]
+	mov ecx, eax
+	cld
+	mov edx, 0x01F0
+	rep insw
+
+	shl eax, 2
+	add esi, eax
+
+	mov eax, [tmp5]
+	add [tmp2], eax
+	cmp [tmp3], 0
+	je .ideloop
+
+	ret
+
+times 5120 - ($ - $$) db 0
+
+; the data segment in GDT
+
+txtcursor dw 0, 0
+
+crntprocid db 0
+
+colourindex db 0
+secondcolour db 0
+
+tmp dd 0
+tmp2 dd 0
+tmp3 dd 0
+tmp4 dd 0
+tmp5 dd 0
+
+rega dd 0, 0, 0, 0
+regc dd 0, 0, 0, 0
+regd dd 0, 0, 0, 0
+
+regsp dd 0, 0, 0, 0
+regbp dd 0, 0, 0, 0
+regdi dd 0, 0, 0, 0
+
+processes dd \
+	0xC0000, \
+	0x00000, \
+	0x00000, \
+	0x00000, \
+
+proccount db 0
+
+times 6144 - ($ - $$) db 0
