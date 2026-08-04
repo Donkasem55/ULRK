@@ -30,9 +30,9 @@ fsend dd 0xB400
 userstart dd 0xC000
 datastart dd 0x1C000
 
-kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
+kernloadingtxt db 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 
-syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
+syscalltest db "RKSI: KERNEL LOADED SUCCESSFULLY", 10, 0
 
 kernelstart:
 	mov [txtcursor], bx
@@ -333,13 +333,15 @@ printchar:
 
 print:
 	mov eax, 80
+	mov ebx, 0
 	mov bx, [txtcursor+2]
-	mul bx
+	mul ebx
 	add ax, [txtcursor]
-	mov bx, 2
-	mul bx
+	mov ebx, 2
+	mul ebx
 	mov edi, eax
 	call resetcursorpos
+	add edi, 0xB8000
 
 .loop:
 	mov ah, [consattr]
@@ -349,7 +351,6 @@ print:
 	cmp al, 10
 	je .newline
 
-	mov edi, 0xB8000
 	mov [edi], ax
 	inc esi
 	add edi, 2
@@ -366,14 +367,15 @@ print:
 	mov [txtcursor], 0
 	add [txtcursor+2], 1
 
-	mov ax, 80
+	mov eax, 80
+	mov ebx, 0
 	mov bx, [txtcursor+2]
-	mul bx
+	mul ebx
 	add ax, [txtcursor]
-	mov bx, 2
-	mul bx
-	mov edi, 0
-	mov di, ax
+	mov ebx, 2
+	mul ebx
+	mov edi, 0xB8000
+	add edi, eax
 
 	call resetcursorpos
 
