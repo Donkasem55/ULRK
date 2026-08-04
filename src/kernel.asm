@@ -1,4 +1,5 @@
 [BITS 32]
+[org 0x8600]
 
 jmp kernelstart
 

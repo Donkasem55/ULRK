@@ -1,6 +1,7 @@
 ; Initialisation System Functions
 
 [org 0x7E00]
+[bits 16]
 
 pass db "123456"
 cli
@@ -18,7 +19,7 @@ init:
 consattr db 0x0F
 passinp db "      "
 osver db "ULRK-26.0", 0
-kernelver db "0.0.1-ULRK-x86_16", 0
+kernelver db "0.0.1-ULRK-x86", 0
 txtcursor dw 0, 0
 savedes dw 0
 
@@ -328,30 +329,77 @@ bootmain:
 	jne .login
 
 .endlogin:
-	cli
-	
+	jmp toprotmode
+
 GDT:
 	dq 0
 
 	; ring zero code
-	db 0b00000000
-	db 0b00000000
-	db 0b10011011
-	db 0x00
+	dw 0x1800
 	dw 0x8600
-	dw 0x1400
+	db 0x00
+	db 0x9A
+	db 0b01000000 ; left flag, right lim
+	db 0b00000000 ; base
 
 	; ring zero data
-	db 0b00000000
-	db 0b00000000
-	db 0b10010011
-	db 0x00
+	dw 0x1800
 	dw 0x8600
-	dw 0x1400
+	db 0x00
+	db 0x92
+	db 0b01000000
+	db 0b00000000
 
-	; continue later
+	; ring one code
+	dw 0x1200
+	dw 0x9E00
+	db 0x00
+	db 0xBA
+	db 0b01000000
+	db 0b00000000
 
-	;jmp kernelstart
+	; ring one data
+	dw 0x1200
+	dw 0x9E00
+	db 0x00
+	db 0xB2
+	db 0b01000000
+	db 0b00000000
+
+	; ring three code
+	dw 0x0000
+	dw 0xC000
+	db 0x00
+	db 0xFA
+	db 0b01000010
+	db 0b00000000
+
+	; ring three data
+	dw 0x0000
+	dw 0xC000
+	db 0x00
+	db 0xF2
+	db 0b01000010
+	db 0b00000000
+
+toprotmode:
+	gdtr dw toprotmode - GDT - 1
+	     dd GDT
+
+	cli
+	in al, 0x92
+	or al, 0b00000010
+	and al, 0b11111110
+	out 0x92, al
+
+	lgdt [gdtr]
+	mov eax, cr0
+	or eax, 1
+	mov cr0, eax
+
+	jmp $
+
+	jmp 0x08:0x0
 
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
