@@ -328,6 +328,9 @@ bootmain:
 	cmp al, [passinp+5]
 	jne .login
 
+	mov si, loggedin
+	call print
+
 .endlogin:
 	jmp toprotmode
 
@@ -335,16 +338,16 @@ GDT:
 	dq 0
 
 	; ring zero code
-	dw 0x1800
-	dw 0x8600
+	dw 0x9DFF
+	dw 0x0000
 	db 0x00
 	db 0x9A
 	db 0b01000000 ; left flag, right lim
 	db 0b00000000 ; base
 
 	; ring zero data
-	dw 0x1800
-	dw 0x8600
+	dw 0x9DFF
+	dw 0x0000
 	db 0x00
 	db 0x92
 	db 0b01000000
@@ -381,10 +384,13 @@ GDT:
 	db 0xF2
 	db 0b01000010
 	db 0b00000000
+gdtend:
+	gdtr dw gdtend - GDT - 1
+	     dd GDT
 
 toprotmode:
-	gdtr dw toprotmode - GDT - 1
-	     dd GDT
+	mov bx, [txtcursor]
+	mov cx, [txtcursor+2]
 
 	cli
 	in al, 0x92
@@ -397,9 +403,7 @@ toprotmode:
 	or eax, 1
 	mov cr0, eax
 
-	jmp $
-
-	jmp 0x08:0x0
+	jmp 0x08:0x8600
 
 load db "[LP 0x01] RKSI: LOADED INITSYSFN", 10, 0
 bootmsg db "[LP 0x02] RKSI: INITIALISED ULRK", 10, 0
@@ -421,6 +425,7 @@ booting db 10, 10, \
 " |  [H]: Halt                            |  ---------\___\-|___|  | ", 10, \
 " ------------------------------------------------------------------ ", 10, 10, 0
 norm db "[LP 0x05] RKSI: Normal Mode Boot Successful", 10, 0
+loggedin db 10, "[LP 0x06] RKSI: Logged in", 10, 0
 spacebar db " ", 0
 exclammark db "!", 0
 dnewline db 10, 10, 0

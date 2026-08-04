@@ -1,1 +1,1 @@
-qemu-system-i386 -drive format=raw,file=disk.img -monitor stdio -d int,cpu_reset,guest_errors -D qemu.log -no-reboot
+qemu-system-i386 -m 1G -drive format=raw,file=disk.img,if=ide -monitor stdio -d int,cpu_reset,guest_errors -D qemu.log -no-reboot

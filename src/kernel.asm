@@ -1,6 +1,14 @@
 [BITS 32]
 [org 0x8600]
 
+mov ax, 0x10
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ss, ax
+mov esp, stacktop
+
 jmp kernelstart
 
 ; memory sections
@@ -27,12 +35,17 @@ kernloadingtxt db 10, 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
 syscalltest db "RKSI: KERNEL LOADED SUCCESSFULL", 10, 0
 
 kernelstart:
+	mov [txtcursor], bx
+	mov [txtcursor+2], cx
+
 	mov esi, kernloadingtxt
 	call print
 
 	mov eax, 0
 	mov esi, syscalltest
 	call 0x8800
+
+	hlt
 
 	mov esi, [microglstart]
 	mov ebx, 0
@@ -182,7 +195,7 @@ syscalls:
 
 .fillbg:
 	mov edi, 0xA0000
-	add edi, cx
+	add edi, ecx
 
 	mov ecx, edx
 	cld
@@ -276,8 +289,8 @@ resetcursorpos:
 	mov al, 0x0F
 	out dx, al
 
-	mov ax, di
-	shr ax, 1
+	mov eax, edi
+	shr eax, 1
 
 	mov dx, 0x3D5
 	out dx, al
@@ -287,8 +300,8 @@ resetcursorpos:
 	out dx, al
 
 	mov dx, 0x3D5
-	mov ax, di
-	shr ax, 1
+	mov eax, edi
+	shr eax, 1
 	mov al, ah
 	out dx, al
 
@@ -319,14 +332,13 @@ printchar:
 	ret
 
 print:
-	mov ax, 80
+	mov eax, 80
 	mov bx, [txtcursor+2]
 	mul bx
 	add ax, [txtcursor]
 	mov bx, 2
 	mul bx
-	mov edi, 0
-	mov di, ax
+	mov edi, eax
 	call resetcursorpos
 
 .loop:
@@ -391,37 +403,37 @@ idedriver:
 	
 .setide256:
 	mov eax, 0
-	mov [tmp5], 256
+	mov dword [tmp5], 256
 
 .aftersetting:
 	mov [tmp3], eax
 
 	mov edx, 0x01F2
-	out edx, al
+	out dx, al
 
 	mov eax, [tmp4]
 	mov edx, 0x01F3
-	out edx, al
+	out dx, al
 
 	shr eax, 8
 	mov edx, 0x01F4
-	out edx, al
+	out dx, al
 
 	shr eax, 8
 	mov edx, 0x01F5
-	out edx, al
+	out dx, al
 
 	mov al, 0b10110000
 	shr eax, 4
 	mov edx, 0x01F6
-	out edx, al
+	out dx, al
 
 	mov edx, 0x01F7
 	mov al, 0x20
-	out edx, al
+	out dx, al
 
 .readloop:
-	in al, edx
+	in al, dx
 	test al, 0x80
 	jnz .readloop
 	test al, 0x08
@@ -445,16 +457,16 @@ idedriver:
 
 	ret
 
-times 5120 - ($ - $$) db 0
-
-; the data segment in GDT
-
 txtcursor dw 0, 0
 
 crntprocid db 0
 
 colourindex db 0
 secondcolour db 0
+
+consattr db 0x1F
+osver db "ULRK-26.0", 0
+kernelver db "0.0.1-ULRK-x86", 0
 
 tmp dd 0
 tmp2 dd 0
@@ -478,4 +490,8 @@ processes dd \
 
 proccount db 0
 
+stack: resb 4096
+stacktop:
+
 times 6144 - ($ - $$) db 0
+
