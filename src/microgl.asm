@@ -5,26 +5,23 @@
 jmp mglMain
 
 mglMain:
-	cmp bx, 0
+	cmp ebx, 0
 	je .mglEnable
 
-	cmp bx, 1
+	cmp ebx, 1
 	je .mglDisable
 
-	cmp bx, 2
+	cmp ebx, 2
 	je .mglSetColor
 
-	cmp bx, 3
+	cmp ebx, 3
 	je .mglSetPX
 
-	cmp bx, 4
+	cmp ebx, 4
 	je .mglFill
 
-	cmp bx, 5
+	cmp ebx, 5
 	je .mglDrawRect
-
-	cmp bx, 6
-	je .mglWrite
 
 	ret
 
@@ -92,83 +89,6 @@ mglMain:
 		push di
 		push si
 		retf
-
-; i cant fucking get the writing to work. i have no idea why the fuck this is happening but it doesnt work. if anyone knows why please help me.
-
-.mglWrite:
-	mov ax, 0x1130
-	mov bh, 0x03
-	int 0x10
-
-	mov [glyphloc], bp
-	mov [esglyphloc], es
-
-	mov [textloc], si
-
-.mglWriteLoop:
-	mov al, 'A'
-	mov cx, 50
-	mov dx, 50
-	call .mglDrawChar
-	ret
-
-.mglDrawChar:
-	mov [x], cx
-	mov [y], dx
-
-	xor ah, ah
-	shl ax, 3
-	mov [singlyphloc], ax
-
-	mov bx, [glyphloc]
-	add [singlyphloc], bx
-	mov bx, [singlyphloc]
-	mov [sgl2], bx
-	add [sgl2], 8
-
-	mov ax, [esglyphloc]
-	mov es, ax
-
-.mglDrawChar2:
-	mov al, 0b00111100 ; [es:bx]
-	mov [accu], 0
-	.mglDrawChar3:
-		shl al, 1
-		jc .mglDrawCharPx
-		.mglDrawChar4:
-		add [accu], 1
-		inc cx
-		cmp [accu], 8
-		jl .mglDrawChar3
-
-	call .mglDrawCharReset
-	inc bx
-	cmp bx, [sgl2]
-	jl .mglDrawChar2
-	ret
-
-.mglDrawCharReset:
-	inc dx
-	mov cx, [x]
-	ret
-
-.mglDrawCharPx:
-	mov [axtmp], ax
-	mov [bxtmp], bx
-	mov [cxtmp], cx
-	mov [dxtmp], dx
-	mov [estmp], es
-
-	call .mglSetPX
-
-	mov ax, [estmp]
-	mov es, ax
-	mov dx, [dxtmp]
-	mov cx, [cxtmp]
-	mov bx, [bxtmp]
-	mov ax, [axtmp]
-
-	jmp .mglDrawChar4
 
 .mglBlit:
 	pop si

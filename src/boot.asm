@@ -12,7 +12,7 @@ mov ch, 0
 mov cl, 2
 mov dh, 0
 mov dl, 0x80
-mov al, 16
+mov al, 24
 mov ah, 2
 int 0x13
 
@@ -24,10 +24,10 @@ disk_error:
 loadfs:
 	mov ax, 0
 	mov es, ax
-	mov bx, 0xB000
+	mov bx, 0xBD00
 
 	mov ch, 0
-	mov cl, 18
+	mov cl, 26
 	mov dh, 0
 	mov dl, 0x80
 	mov al, 1

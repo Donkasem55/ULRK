@@ -18,7 +18,7 @@ init:
 ; starting attributes segment
 consattr db 0x0F
 passinp db "      "
-osver db "ULRK-26.0", 0
+osver db "LiberationOS-26.0", 0
 kernelver db "0.0.1-ULRK-x86", 0
 txtcursor dw 0, 0
 savedes dw 0
@@ -338,7 +338,7 @@ GDT:
 	dq 0
 
 	; ring zero code
-	dw 0x9DFF
+	dw 0xADFF
 	dw 0x0000
 	db 0x00
 	db 0x9A
@@ -346,7 +346,7 @@ GDT:
 	db 0b00000000 ; base
 
 	; ring zero data
-	dw 0x9DFF
+	dw 0xADFF
 	dw 0x0000
 	db 0x00
 	db 0x92
@@ -354,35 +354,35 @@ GDT:
 	db 0b00000000
 
 	; ring one code
-	dw 0x1200
-	dw 0x9E00
+	dw 0x0E00
+	dw 0xAE00
 	db 0x00
 	db 0xBA
 	db 0b01000000
 	db 0b00000000
 
 	; ring one data
-	dw 0x1200
-	dw 0x9E00
+	dw 0x0E00
+	dw 0xAE00
 	db 0x00
 	db 0xB2
 	db 0b01000000
 	db 0b00000000
 
 	; ring three code
-	dw 0x0000
+	dw 0xFFFF
 	dw 0xC000
-	db 0x00
+	db 0xFF
 	db 0xFA
-	db 0b01000010
+	db 0b01000000
 	db 0b00000000
 
 	; ring three data
-	dw 0x0000
+	dw 0xFFFF
 	dw 0xC000
-	db 0x00
+	db 0xFF
 	db 0xF2
-	db 0b01000010
+	db 0b01000000
 	db 0b00000000
 gdtend:
 	gdtr dw gdtend - GDT - 1
@@ -411,19 +411,18 @@ mainloop db "[LP 0x03] RKSI: ENTERED MAINLOOP", 10, 10, 0
 welc db "[LP 0x04] RKSI: Initialisation Complete", 10, 0
 welc2 db 10, " Welcome to ", 0
 booting db 10, 10, \
-" ------------------------------------------------------------------ ", 10, \
-" |   _     _   _         ___     _   __  |  -----    ____  -----  | ", 10, \
-" |  | |   | | | |       |  _ \  | | / /  |  |   |___/   /__|   |  | ", 10, \
-" |  | |   | | | |       | |_| | | |/ /   |  |      /   /   |   |  | ", 10, \
-" |  | |   | | | |       |    /  |   /    |  |    _/   /____|   |  | ", 10, \
-" |  | \___/ | | |_____  | |\ \  | |\ \   |  |   |/   /     |   |  | ", 10, \
-" |   \_____/  |_______| |_| \_\ |_| \_\  |  |       /      |   |  | ", 10, \
-" |                                       |  |   |\   \     |   |  | ", 10, \
-" |----------- Welcome to ULRK -----------|  |   | \   \    |   |  | ", 10, \
-" |  [B]: Boot in Normal Mode             |  |   |__\   \___|   |  | ", 10, \
-" |  [R]: Reboot                          |  |       \   \  |   |  | ", 10, \
-" |  [H]: Halt                            |  ---------\___\-|___|  | ", 10, \
-" ------------------------------------------------------------------ ", 10, 10, 0
+"    _         _   ____     ____    ______    ", 10, \
+"   | |       | | |    \   /    \  |  ____|        /\    /\    /\  ", 10, \
+"   | |       | | |    /  |      | | |____        /  \  /  \  /  \ ", 10, \
+"   | |       | | |    \  |      | |____  |      /   / /   / /   / ", 10, \
+"   | |_____  | | |     | |      |  ____| |     /   / /   / /   /  ", 10, \
+"   |_______| |_| |____/   \____/  |______|    /   / /   / /   /   ", 10, \
+"                                              \   \ \   \ \   \   ", 10, \
+" --------- Welcome to LiberationOS ---------   \   \ \   \ \   \  ", 10, \
+" |   [B]: Boot in Normal Mode              |    \   \ \   \ \   \ ", 10, \
+" |   [R]: Reboot                           |     \  /  \  /  \  / ", 10, \
+" |   [H]: Halt                             |      \/    \/    \/  ", 10, \
+" -------------------------------------------", 10, 10, 0
 norm db "[LP 0x05] RKSI: Normal Mode Boot Successful", 10, 0
 loggedin db 10, "[LP 0x06] RKSI: Logged in", 10, 0
 spacebar db " ", 0

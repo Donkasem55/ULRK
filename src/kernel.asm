@@ -18,21 +18,19 @@ bootend dd 0x81FF
 
 kernstart dd 0x8600
 syscallstart dd 0x8800
-kerndatastart dd 0x9A00
-kernend dd 0x9D00
+kernend dd 0xADFF
 
-microglstart dd 0x9E00
-microglend dd 0xAFFF
+microglstart dd 0xAE00
+microglend dd 0xBBFF
 
-fsstart dd 0xB000
-fsend dd 0xB400
+fsstart dd 0xBD00
+fsend dd 0xBFFF
 
 userstart dd 0xC000
-datastart dd 0x1C000
 
-kernloadingtxt db 10, "RKSI: ATTEMPTING KERNEL LOAD", 10, 0
-
-syscalltest db "RKSI: KERNEL LOADED SUCCESSFULLY", 10, 0
+kernloadingtxt db "[LP 0x07] RKSI: ATTEMPTING KERNEL LOAD", 10, 0
+syscalltest db "[LP 0x08] RKSI: KERNEL LOADED SUCCESSFULLY", 10, 0
+lpid dw 0x09
 
 kernelstart:
 	mov [txtcursor], bx
@@ -374,10 +372,10 @@ print:
 	add ax, [txtcursor]
 	mov ebx, 2
 	mul ebx
-	mov edi, 0xB8000
-	add edi, eax
+	mov edi, eax
 
 	call resetcursorpos
+	add edi, 0xB8000
 
 	inc esi
 	jmp .loop
@@ -467,7 +465,7 @@ colourindex db 0
 secondcolour db 0
 
 consattr db 0x1F
-osver db "ULRK-26.0", 0
+osver db "LiberationOS-26.0", 0
 kernelver db "0.0.1-ULRK-x86", 0
 
 tmp dd 0
@@ -495,5 +493,5 @@ proccount db 0
 stack: resb 4096
 stacktop:
 
-times 6144 - ($ - $$) db 0
+times 10240 - ($ - $$) db 0
 
