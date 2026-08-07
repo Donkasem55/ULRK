@@ -2,3 +2,5 @@
 obj/
 
 *.img
+
+qemu.log
